@@ -96,12 +96,24 @@ func (p *Parser) parseInsert() (*InsertStatement, error) {
 		return nil, fmt.Errorf("found %q, expected INTO", lit)
 	}
 
+	// `
+	tok, lit = p.scanIgnoreWhitespace()
+	if tok != BACKTICK {
+		p.unscan()
+	}
+
 	// Then we should read the table name.
 	tok, lit = p.scanIgnoreWhitespace()
 	if tok != IDENT {
 		return nil, fmt.Errorf("found %q, expected table name", lit)
 	}
 	stmt.TableName = lit
+
+	// `
+	tok, lit = p.scanIgnoreWhitespace()
+	if tok != BACKTICK {
+		p.unscan()
+	}
 
 	// VALUES
 	tok, lit = p.scanIgnoreWhitespace()
@@ -118,6 +130,12 @@ func (p *Parser) parseInsert() (*InsertStatement, error) {
 			return nil, fmt.Errorf("found %q, expected STARTBRACKET", lit)
 		}
 
+		// '
+		tok, lit = p.scanIgnoreWhitespace()
+		if tok != SINGLEQUOTE {
+			return nil, fmt.Errorf("found %q, expected SINGLEQUOTE", lit)
+		}
+
 		// Read a value.
 		tok, lit = p.scanIgnoreWhitespace()
 		if tok != IDENT {
@@ -127,6 +145,12 @@ func (p *Parser) parseInsert() (*InsertStatement, error) {
 		key := lit
 		var values []string
 
+		// '
+		tok, lit = p.scanIgnoreWhitespace()
+		if tok != SINGLEQUOTE {
+			return nil, fmt.Errorf("found %q, expected SINGLEQUOTE", lit)
+		}
+
 		for {
 			// If the next token is not a comma then break the loop.
 			if tok, _ := p.scanIgnoreWhitespace(); tok != COMMA {
@@ -134,12 +158,25 @@ func (p *Parser) parseInsert() (*InsertStatement, error) {
 				break
 			}
 
+			// '
+			tok, lit = p.scanIgnoreWhitespace()
+			if tok != SINGLEQUOTE {
+				return nil, fmt.Errorf("found %q, expected SINGLEQUOTE", lit)
+			}
+
 			// Read a value.
 			tok, lit := p.scanIgnoreWhitespace()
 			if tok != IDENT {
 				return nil, fmt.Errorf("found %q, expected value", lit)
 			}
+
 			values = append(values, lit)
+
+			// '
+			tok, lit = p.scanIgnoreWhitespace()
+			if tok != SINGLEQUOTE {
+				return nil, fmt.Errorf("found %q, expected SINGLEQUOTE", lit)
+			}
 		}
 
 		stmt.Values[key] = values
@@ -183,12 +220,6 @@ func (p *Parser) scan() (tok Token, lit string) {
 func (p *Parser) scanIgnoreWhitespace() (tok Token, lit string) {
 	tok, lit = p.scan()
 	if tok == WS {
-		tok, lit = p.scan()
-	}
-	if tok == BACKTICK {
-		tok, lit = p.scan()
-	}
-	if tok == SINGLEQUOTE {
 		tok, lit = p.scan()
 	}
 	return

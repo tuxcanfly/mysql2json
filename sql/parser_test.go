@@ -68,7 +68,7 @@ func TestParser_ParseInsertStatement(t *testing.T) {
 	}{
 		// Simple Insert statement
 		{
-			s: `INSERT INTO departments VALUES ('db001', 'Marketing')`,
+			s: "INSERT INTO `departments` VALUES ('db001', 'Marketing')",
 			stmt: &sql.InsertStatement{
 				TableName: "departments",
 				Values:    map[string][]string{"db001": []string{"Marketing"}},
